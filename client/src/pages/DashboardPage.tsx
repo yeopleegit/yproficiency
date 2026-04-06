@@ -31,35 +31,35 @@ export default function DashboardPage({ onLogSession }: Props) {
   const categories = data?.categories ?? []
 
   const statCards = [
-    { label: 'Categories', value: stats?.totalCategories ?? 0, icon: Target, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Skills', value: stats?.totalSkills ?? 0, icon: Activity, color: 'text-green-600 bg-green-50' },
-    { label: 'Total Sessions', value: stats?.totalSessions ?? 0, icon: Calendar, color: 'text-purple-600 bg-purple-50' },
-    { label: 'This Week', value: stats?.sessionsThisWeek ?? 0, icon: Calendar, color: 'text-orange-600 bg-orange-50' },
+    { label: '카테고리', value: stats?.totalCategories ?? 0, icon: Target, color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30' },
+    { label: '스킬', value: stats?.totalSkills ?? 0, icon: Activity, color: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30' },
+    { label: '총 연습 횟수', value: stats?.totalSessions ?? 0, icon: Calendar, color: 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/30' },
+    { label: '이번 주', value: stats?.sessionsThisWeek ?? 0, icon: Calendar, color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/30' },
   ]
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">대시보드</h1>
         <button
           onClick={() => onLogSession()}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
         >
-          <Plus size={16} /> Log Session
+          <Plus size={16} /> 연습 기록
         </button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
+          <div key={label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${color}`}>
                 <Icon size={20} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
               </div>
             </div>
           </div>
@@ -68,27 +68,27 @@ export default function DashboardPage({ onLogSession }: Props) {
 
       {/* Most Stale Skill Warning */}
       {stats?.mostStaleSkill && stats.mostStaleSkill.daysSince > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-          <AlertTriangle size={20} className="text-amber-600 shrink-0" />
-          <p className="text-sm text-amber-800">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-center gap-3">
+          <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 shrink-0" />
+          <p className="text-sm text-amber-800 dark:text-amber-200">
             <strong>{stats.mostStaleSkill.name}</strong> ({stats.mostStaleSkill.itemName} - {stats.mostStaleSkill.categoryName})
             {stats.mostStaleSkill.daysSince >= 0
-              ? ` hasn't been practiced in ${stats.mostStaleSkill.daysSince} days`
-              : ' has never been practiced'}
+              ? ` — ${stats.mostStaleSkill.daysSince}일 동안 연습하지 않았습니다`
+              : ' — 아직 연습한 적이 없습니다'}
           </p>
         </div>
       )}
 
       {/* Frequency Chart */}
       {frequency.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Practice Frequency (Last 30 Days)</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">연습 빈도 (최근 30일)</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={frequency}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d: string) => d.slice(5)} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-700" />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d: string) => d.slice(5)} stroke="currentColor" className="text-gray-500 dark:text-gray-400" />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="currentColor" className="text-gray-500 dark:text-gray-400" />
+              <Tooltip contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--tooltip-border)', borderRadius: '8px', color: 'var(--tooltip-text)' }} />
               <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -97,40 +97,40 @@ export default function DashboardPage({ onLogSession }: Props) {
 
       {/* Categories with Skills */}
       {categories.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <Target size={48} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No categories yet</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Go to Settings to create your first category, then add items and skills.
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <Target size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">카테고리가 없습니다</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            설정에서 카테고리를 만들고, 아이템과 스킬을 추가하세요.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           {categories.map((cat: any) => (
-            <div key={cat.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">
+            <div key={cat.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                   {cat.icon} {cat.name}
                 </h3>
               </div>
               {cat.items.length === 0 ? (
-                <p className="p-4 text-sm text-gray-400">No items yet</p>
+                <p className="p-4 text-sm text-gray-400 dark:text-gray-500">아이템이 없습니다</p>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {cat.items.map((item: any) => (
                     <div key={item.id} className="p-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">{item.name}</h4>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{item.name}</h4>
                       {item.skills.length === 0 ? (
-                        <p className="text-xs text-gray-400">No skills yet</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">스킬이 없습니다</p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {item.skills.map((skill: any) => (
                             <button
                               key={skill.id}
                               onClick={() => onLogSession(skill.id)}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm"
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm"
                             >
-                              <span className="text-gray-700">{skill.name}</span>
+                              <span className="text-gray-700 dark:text-gray-300">{skill.name}</span>
                               <StatusBadge
                                 status={skill.status}
                                 daysSince={skill.daysSinceLastPractice}

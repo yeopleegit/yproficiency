@@ -1,5 +1,5 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FolderOpen, Settings, Plus, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, Settings, Plus, Menu, X, Moon, Sun } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from './api/client'
 import DashboardPage from './pages/DashboardPage'
@@ -8,11 +8,27 @@ import SettingsPage from './pages/SettingsPage'
 import { useState, useEffect } from 'react'
 import SessionFormModal from './components/sessions/SessionFormModal'
 
+function useDarkMode() {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('theme')
+    if (saved) return saved === 'dark'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
+  }, [dark])
+
+  return [dark, () => setDark(d => !d)] as const
+}
+
 function App() {
   const location = useLocation()
   const [sessionModalOpen, setSessionModalOpen] = useState(false)
   const [sessionSkillId, setSessionSkillId] = useState<number | undefined>()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [dark, toggleDark] = useDarkMode()
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -30,23 +46,32 @@ function App() {
   }
 
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/', icon: LayoutDashboard, label: '대시보드' },
+    { path: '/settings', icon: Settings, label: '설정' },
   ]
 
   const sidebarContent = (
     <>
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">YProficiency</h1>
-          <p className="text-xs text-gray-500 mt-1">Skill Maintenance Tracker</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">YProficiency</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">기량 유지 트래커</p>
         </div>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden p-1 rounded hover:bg-gray-100"
-        >
-          <X size={20} className="text-gray-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleDark}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+            title={dark ? '라이트 모드' : '다크 모드'}
+          >
+            {dark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <X size={20} className="text-gray-400" />
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-auto">
@@ -58,8 +83,8 @@ function App() {
               to={path}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               <Icon size={18} />
@@ -71,8 +96,8 @@ function App() {
         {categories.length > 0 && (
           <>
             <div className="pt-4 pb-2 px-3">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Categories
+              <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                카테고리
               </span>
             </div>
             {categories.map((cat: any) => {
@@ -83,8 +108,8 @@ function App() {
                   to={`/categories/${cat.id}`}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                     active
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
                 >
                   <FolderOpen size={16} />
@@ -96,32 +121,40 @@ function App() {
         )}
       </nav>
 
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={() => openSessionModal()}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
         >
           <Plus size={16} />
-          Log Session
+          연습 기록
         </button>
       </div>
     </>
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => setSidebarOpen(true)} className="p-1 rounded hover:bg-gray-100">
-          <Menu size={24} className="text-gray-600" />
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+        <button onClick={() => setSidebarOpen(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+          <Menu size={24} className="text-gray-600 dark:text-gray-300" />
         </button>
-        <h1 className="text-lg font-bold text-gray-900">YProficiency</h1>
-        <button
-          onClick={() => openSessionModal()}
-          className="p-1 rounded hover:bg-blue-50 text-blue-600"
-        >
-          <Plus size={24} />
-        </button>
+        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">YProficiency</h1>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleDark}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+          >
+            {dark ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button
+            onClick={() => openSessionModal()}
+            className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile overlay */}
@@ -135,7 +168,7 @@ function App() {
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-white border-r border-gray-200 flex flex-col
+        w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col
         transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>

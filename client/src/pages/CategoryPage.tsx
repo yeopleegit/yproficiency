@@ -1,14 +1,29 @@
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronRight, Pencil, Copy } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '../api/client'
 import StatusBadge from '../components/shared/StatusBadge'
 import ConfirmDialog from '../components/shared/ConfirmDialog'
+import Modal from '../components/shared/Modal'
 
 interface Props {
   onLogSession: (skillId?: number) => void
+}
+
+interface EditItemData {
+  id: number
+  name: string
+  description: string
+  icon: string
+}
+
+interface EditSkillData {
+  id: number
+  name: string
+  description: string
+  decay_days: string
 }
 
 export default function CategoryPage({ onLogSession }: Props) {
@@ -20,6 +35,8 @@ export default function CategoryPage({ onLogSession }: Props) {
   const [newSkillName, setNewSkillName] = useState('')
   const [deleteItemTarget, setDeleteItemTarget] = useState<{ id: number; name: string } | null>(null)
   const [deleteSkillTarget, setDeleteSkillTarget] = useState<{ id: number; name: string } | null>(null)
+  const [editItem, setEditItem] = useState<EditItemData | null>(null)
+  const [editSkill, setEditSkill] = useState<EditSkillData | null>(null)
 
   const { data: category, isLoading } = useQuery({
     queryKey: ['category', id],
@@ -40,23 +57,49 @@ export default function CategoryPage({ onLogSession }: Props) {
 
   const addItemMutation = useMutation({
     mutationFn: () => api.createItem(Number(id), { name: newItemName }),
-    onSuccess: () => { invalidateAll(); setNewItemName(''); toast.success('Item added!') },
+    onSuccess: () => { invalidateAll(); setNewItemName(''); toast.success('아이템을 추가했습니다') },
   })
 
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: number) => api.deleteItem(itemId),
-    onSuccess: () => { invalidateAll(); setDeleteItemTarget(null); toast.success('Item deleted') },
+    onSuccess: () => { invalidateAll(); setDeleteItemTarget(null); toast.success('아이템을 삭제했습니다') },
   })
 
   const addSkillMutation = useMutation({
     mutationFn: ({ itemId, name }: { itemId: number; name: string }) =>
       api.createSkill(itemId, { name }),
-    onSuccess: () => { invalidateAll(); setNewSkillName(''); setAddingSkillTo(null); toast.success('Skill added!') },
+    onSuccess: () => { invalidateAll(); setNewSkillName(''); setAddingSkillTo(null); toast.success('스킬을 추가했습니다') },
   })
 
   const deleteSkillMutation = useMutation({
     mutationFn: (skillId: number) => api.deleteSkill(skillId),
-    onSuccess: () => { invalidateAll(); setDeleteSkillTarget(null); toast.success('Skill deleted') },
+    onSuccess: () => { invalidateAll(); setDeleteSkillTarget(null); toast.success('스킬을 삭제했습니다') },
+  })
+
+  const copyItemMutation = useMutation({
+    mutationFn: (itemId: number) => api.copyItem(itemId),
+    onSuccess: () => { invalidateAll(); toast.success('아이템을 복사했습니다') },
+    onError: (err: any) => toast.error(err.message || '아이템 복사에 실패했습니다'),
+  })
+
+  const copySkillMutation = useMutation({
+    mutationFn: (skillId: number) => api.copySkill(skillId),
+    onSuccess: () => { invalidateAll(); toast.success('스킬을 복사했습니다') },
+    onError: (err: any) => toast.error(err.message || '스킬 복사에 실패했습니다'),
+  })
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ id, ...data }: { id: number; name: string; description?: string; icon?: string }) =>
+      api.updateItem(id, data),
+    onSuccess: () => { invalidateAll(); setEditItem(null); toast.success('아이템을 수정했습니다') },
+    onError: (err: any) => toast.error(err.message || '아이템 수정에 실패했습니다'),
+  })
+
+  const updateSkillMutation = useMutation({
+    mutationFn: ({ id, ...data }: { id: number; name: string; description?: string; decay_days?: number }) =>
+      api.updateSkill(id, data),
+    onSuccess: () => { invalidateAll(); setEditSkill(null); toast.success('스킬을 수정했습니다') },
+    onError: (err: any) => toast.error(err.message || '스킬 수정에 실패했습니다'),
   })
 
   const toggleItem = (itemId: number) => {
@@ -79,6 +122,8 @@ export default function CategoryPage({ onLogSession }: Props) {
     return null
   }
 
+  const inputClass = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -87,19 +132,19 @@ export default function CategoryPage({ onLogSession }: Props) {
     )
   }
 
-  if (!category) return <div className="p-6 text-gray-500">Category not found</div>
+  if (!category) return <div className="p-6 text-gray-500 dark:text-gray-400">카테고리를 찾을 수 없습니다</div>
 
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           {category.icon} {category.name}
         </h1>
         {category.description && (
-          <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{category.description}</p>
         )}
-        <p className="text-xs text-gray-400 mt-1">
-          Decay threshold: {category.decay_days} days
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          감소 기준: {category.decay_days}일
         </p>
       </div>
 
@@ -111,56 +156,73 @@ export default function CategoryPage({ onLogSession }: Props) {
         <input
           value={newItemName}
           onChange={e => setNewItemName(e.target.value)}
-          placeholder="Add new item (e.g., F-16, Piano Sonata No.1)..."
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="새 아이템 추가 (예: F-16, 피아노 소나타 1번)..."
+          className={`flex-1 ${inputClass}`}
         />
         <button
           type="submit"
           disabled={!newItemName.trim()}
           className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
         >
-          <Plus size={16} /> Add Item
+          <Plus size={16} /> 추가
         </button>
       </form>
 
       {/* Items list */}
       {category.items?.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <p className="text-gray-500">No items yet. Add one above!</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <p className="text-gray-500 dark:text-gray-400">아이템이 없습니다. 위에서 추가하세요!</p>
         </div>
       ) : (
         <div className="space-y-3">
           {category.items?.map((item: any) => {
             const expanded = expandedItems.has(item.id)
             return (
-              <div key={item.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div
-                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50"
+                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750"
                   onClick={() => toggleItem(item.id)}
                 >
                   <div className="flex items-center gap-2">
-                    {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <span className="text-xs text-gray-400">
-                      {item.skills?.length ?? 0} skills
+                    {expanded ? <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 dark:text-gray-400" />}
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{item.name}</h3>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {item.skills?.length ?? 0}개 스킬
                     </span>
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); setDeleteItemTarget({ id: item.id, name: item.name }) }}
-                    className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={e => { e.stopPropagation(); copyItemMutation.mutate(item.id) }}
+                      className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-400 hover:text-green-500"
+                      title="아이템 복사"
+                    >
+                      <Copy size={14} />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); setEditItem({ id: item.id, name: item.name, description: item.description ?? '', icon: item.icon ?? '' }) }}
+                      className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-400 hover:text-blue-500"
+                      title="아이템 수정"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); setDeleteItemTarget({ id: item.id, name: item.name }) }}
+                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
+                      title="아이템 삭제"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {expanded && (
-                  <div className="border-t border-gray-100 px-4 py-3 space-y-2">
+                  <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 space-y-2">
                     {item.skills?.map((skill: any) => {
                       const status = getSkillStatus(skill.id)
                       return (
                         <div key={skill.id} className="flex items-center justify-between py-1.5">
                           <div className="flex items-center gap-3">
-                            <span className="text-sm text-gray-700">{skill.name}</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">{skill.name}</span>
                             {status && (
                               <StatusBadge
                                 status={status.status}
@@ -172,13 +234,28 @@ export default function CategoryPage({ onLogSession }: Props) {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => onLogSession(skill.id)}
-                              className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                              className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50"
                             >
-                              Log
+                              기록
+                            </button>
+                            <button
+                              onClick={() => copySkillMutation.mutate(skill.id)}
+                              className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-400 hover:text-green-500"
+                              title="스킬 복사"
+                            >
+                              <Copy size={12} />
+                            </button>
+                            <button
+                              onClick={() => setEditSkill({ id: skill.id, name: skill.name, description: skill.description ?? '', decay_days: skill.decay_days?.toString() ?? '' })}
+                              className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-400 hover:text-blue-500"
+                              title="스킬 수정"
+                            >
+                              <Pencil size={12} />
                             </button>
                             <button
                               onClick={() => setDeleteSkillTarget({ id: skill.id, name: skill.name })}
-                              className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
+                              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
+                              title="스킬 삭제"
                             >
                               <Trash2 size={12} />
                             </button>
@@ -199,27 +276,27 @@ export default function CategoryPage({ onLogSession }: Props) {
                         <input
                           value={newSkillName}
                           onChange={e => setNewSkillName(e.target.value)}
-                          placeholder="Skill name (e.g., Takeoff, Landing)..."
-                          className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+                          placeholder="스킬 이름 (예: Takeoff, Landing)..."
+                          className="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                           autoFocus
                         />
                         <button type="submit" className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
-                          Add
+                          추가
                         </button>
                         <button
                           type="button"
                           onClick={() => { setAddingSkillTo(null); setNewSkillName('') }}
-                          className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                          className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
                         >
-                          Cancel
+                          취소
                         </button>
                       </form>
                     ) : (
                       <button
                         onClick={() => setAddingSkillTo(item.id)}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 pt-1"
+                        className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 pt-1"
                       >
-                        <Plus size={14} /> Add Skill
+                        <Plus size={14} /> 스킬 추가
                       </button>
                     )}
                   </div>
@@ -233,8 +310,9 @@ export default function CategoryPage({ onLogSession }: Props) {
       {/* Delete Item Confirm */}
       {deleteItemTarget && (
         <ConfirmDialog
-          title="Delete Item"
-          message={`"${deleteItemTarget.name}" and all its skills and session records will be permanently deleted.`}
+          title="아이템 삭제"
+          message={`"${deleteItemTarget.name}"과(와) 하위 스킬, 연습 기록이 모두 영구 삭제됩니다.`}
+          confirmLabel="삭제"
           onConfirm={() => deleteItemMutation.mutate(deleteItemTarget.id)}
           onCancel={() => setDeleteItemTarget(null)}
         />
@@ -243,11 +321,133 @@ export default function CategoryPage({ onLogSession }: Props) {
       {/* Delete Skill Confirm */}
       {deleteSkillTarget && (
         <ConfirmDialog
-          title="Delete Skill"
-          message={`"${deleteSkillTarget.name}" and all its session records will be permanently deleted.`}
+          title="스킬 삭제"
+          message={`"${deleteSkillTarget.name}"과(와) 모든 연습 기록이 영구 삭제됩니다.`}
+          confirmLabel="삭제"
           onConfirm={() => deleteSkillMutation.mutate(deleteSkillTarget.id)}
           onCancel={() => setDeleteSkillTarget(null)}
         />
+      )}
+
+      {/* Edit Item Modal */}
+      {editItem && (
+        <Modal title="아이템 수정" onClose={() => setEditItem(null)}>
+          <form
+            onSubmit={e => {
+              e.preventDefault()
+              if (!editItem.name.trim()) return
+              updateItemMutation.mutate({
+                id: editItem.id,
+                name: editItem.name.trim(),
+                description: editItem.description.trim() || undefined,
+                icon: editItem.icon.trim() || undefined,
+              })
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이름</label>
+              <input
+                value={editItem.name}
+                onChange={e => setEditItem({ ...editItem, name: e.target.value })}
+                className={inputClass}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">설명</label>
+              <textarea
+                value={editItem.description}
+                onChange={e => setEditItem({ ...editItem, description: e.target.value })}
+                placeholder="선택 사항..."
+                rows={2}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">아이콘 (이모지)</label>
+              <input
+                value={editItem.icon}
+                onChange={e => setEditItem({ ...editItem, icon: e.target.value })}
+                placeholder="예: ✈️"
+                className={inputClass}
+                maxLength={10}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setEditItem(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
+                취소
+              </button>
+              <button type="submit" disabled={updateItemMutation.isPending} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {updateItemMutation.isPending ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Skill Modal */}
+      {editSkill && (
+        <Modal title="스킬 수정" onClose={() => setEditSkill(null)}>
+          <form
+            onSubmit={e => {
+              e.preventDefault()
+              if (!editSkill.name.trim()) return
+              updateSkillMutation.mutate({
+                id: editSkill.id,
+                name: editSkill.name.trim(),
+                description: editSkill.description.trim() || undefined,
+                decay_days: editSkill.decay_days ? Number(editSkill.decay_days) : undefined,
+              })
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이름</label>
+              <input
+                value={editSkill.name}
+                onChange={e => setEditSkill({ ...editSkill, name: e.target.value })}
+                className={inputClass}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">설명</label>
+              <textarea
+                value={editSkill.description}
+                onChange={e => setEditSkill({ ...editSkill, description: e.target.value })}
+                placeholder="선택 사항..."
+                rows={2}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">감소 기준일 (개별 설정)</label>
+              <input
+                type="number"
+                value={editSkill.decay_days}
+                onChange={e => setEditSkill({ ...editSkill, decay_days: e.target.value })}
+                placeholder={`카테고리 기본값: ${category?.decay_days ?? 30}일`}
+                min="1"
+                max="365"
+                className={inputClass}
+              />
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                비워두면 카테고리 기본값 ({category?.decay_days ?? 30}일) 을 사용합니다
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setEditSkill(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
+                취소
+              </button>
+              <button type="submit" disabled={updateSkillMutation.isPending} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {updateSkillMutation.isPending ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   )

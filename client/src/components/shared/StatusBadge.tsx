@@ -15,10 +15,10 @@ export default function StatusBadge({ status, daysSince, decayDays }: Props) {
       <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
       {label}
       {daysSince !== null && (
-        <span className="opacity-75">({daysSince}d / {decayDays}d)</span>
+        <span className="opacity-75">({daysSince}일 / {decayDays}일)</span>
       )}
       {daysSince === null && (
-        <span className="opacity-75">(never)</span>
+        <span className="opacity-75">(미연습)</span>
       )}
     </span>
   )

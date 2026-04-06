@@ -55,6 +55,20 @@ router.put('/skills/:id', (req, res) => {
   res.json(updated);
 });
 
+// POST /api/v1/skills/:id/copy
+router.post('/skills/:id/copy', (req, res) => {
+  const existing = queryOne('SELECT * FROM skills WHERE id = ?', [Number(req.params.id)]);
+  if (!existing) return res.status(404).json({ error: 'Skill not found' });
+
+  const newId = insert(
+    'INSERT INTO skills (item_id, name, description, decay_days, target_frequency_days) VALUES (?, ?, ?, ?, ?)',
+    [existing.item_id, `Copy of ${existing.name}`, existing.description, existing.decay_days, existing.target_frequency_days]
+  );
+
+  const skill = queryOne('SELECT * FROM skills WHERE id = ?', [newId]);
+  res.status(201).json(skill);
+});
+
 // DELETE /api/v1/skills/:id
 router.delete('/skills/:id', (req, res) => {
   const existing = queryOne('SELECT * FROM skills WHERE id = ?', [Number(req.params.id)]);

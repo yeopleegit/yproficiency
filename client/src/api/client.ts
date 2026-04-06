@@ -26,12 +26,14 @@ export const api = {
   getItem: (id: number) => request<any>(`/items/${id}`),
   createItem: (catId: number, data: any) => request<any>(`/categories/${catId}/items`, { method: 'POST', body: JSON.stringify(data) }),
   updateItem: (id: number, data: any) => request<any>(`/items/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  copyItem: (id: number) => request<any>(`/items/${id}/copy`, { method: 'POST' }),
   deleteItem: (id: number) => request<void>(`/items/${id}`, { method: 'DELETE' }),
 
   // Skills
   getSkills: (itemId: number) => request<any[]>(`/items/${itemId}/skills`),
   createSkill: (itemId: number, data: any) => request<any>(`/items/${itemId}/skills`, { method: 'POST', body: JSON.stringify(data) }),
   updateSkill: (id: number, data: any) => request<any>(`/skills/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  copySkill: (id: number) => request<any>(`/skills/${id}/copy`, { method: 'POST' }),
   deleteSkill: (id: number) => request<void>(`/skills/${id}`, { method: 'DELETE' }),
 
   // Sessions

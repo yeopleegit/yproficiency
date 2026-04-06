@@ -63,6 +63,30 @@ router.put('/items/:id', (req, res) => {
   res.json(updated);
 });
 
+// POST /api/v1/items/:id/copy
+router.post('/items/:id/copy', (req, res) => {
+  const existing = queryOne('SELECT * FROM items WHERE id = ?', [Number(req.params.id)]);
+  if (!existing) return res.status(404).json({ error: 'Item not found' });
+
+  const newId = insert(
+    'INSERT INTO items (category_id, name, description, icon) VALUES (?, ?, ?, ?)',
+    [existing.category_id, `Copy of ${existing.name}`, existing.description, existing.icon]
+  );
+
+  // Copy all skills (without sessions)
+  const skills = queryAll('SELECT * FROM skills WHERE item_id = ?', [Number(req.params.id)]);
+  for (const skill of skills) {
+    insert(
+      'INSERT INTO skills (item_id, name, description, decay_days, target_frequency_days) VALUES (?, ?, ?, ?, ?)',
+      [newId, skill.name, skill.description, skill.decay_days, skill.target_frequency_days]
+    );
+  }
+
+  const item = queryOne('SELECT * FROM items WHERE id = ?', [newId]);
+  const newSkills = queryAll('SELECT * FROM skills WHERE item_id = ?', [newId]);
+  res.status(201).json({ ...item, skills: newSkills });
+});
+
 // DELETE /api/v1/items/:id
 router.delete('/items/:id', (req, res) => {
   const existing = queryOne('SELECT * FROM items WHERE id = ?', [Number(req.params.id)]);

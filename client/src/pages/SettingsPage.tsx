@@ -33,7 +33,7 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       setNewName(''); setNewDesc(''); setNewIcon(''); setNewDecay('14')
-      toast.success('Category created!')
+      toast.success('카테고리를 생성했습니다')
     },
   })
 
@@ -43,7 +43,7 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       setEditingId(null)
-      toast.success('Category updated!')
+      toast.success('카테고리를 수정했습니다')
     },
   })
 
@@ -53,7 +53,7 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       setDeleteTarget(null)
-      toast.success('Category deleted')
+      toast.success('카테고리를 삭제했습니다')
     },
   })
 
@@ -62,10 +62,10 @@ export default function SettingsPage() {
     onSuccess: (result) => {
       queryClient.invalidateQueries()
       setImportConfirm(null)
-      toast.success(`Imported: ${result.counts.categories} categories, ${result.counts.skills} skills, ${result.counts.sessions} sessions`)
+      toast.success(`가져오기 완료: 카테고리 ${result.counts.categories}개, 스킬 ${result.counts.skills}개, 세션 ${result.counts.sessions}개`)
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Import failed')
+      toast.error(err.message || '가져오기에 실패했습니다')
     },
   })
 
@@ -84,9 +84,9 @@ export default function SettingsPage() {
       a.download = `yproficiency-backup-${new Date().toISOString().split('T')[0]}.json`
       a.click()
       URL.revokeObjectURL(url)
-      toast.success('Data exported!')
+      toast.success('데이터를 내보냈습니다')
     } catch {
-      toast.error('Export failed')
+      toast.error('내보내기에 실패했습니다')
     }
   }
 
@@ -98,118 +98,70 @@ export default function SettingsPage() {
       try {
         const data = JSON.parse(ev.target?.result as string)
         if (!data?.data?.categories) {
-          toast.error('Invalid backup file format')
+          toast.error('올바르지 않은 백업 파일 형식입니다')
           return
         }
         setImportConfirm(data)
       } catch {
-        toast.error('Failed to parse file')
+        toast.error('파일을 읽을 수 없습니다')
       }
     }
     reader.readAsText(file)
-    // Reset input so the same file can be selected again
     e.target.value = ''
   }
 
+  const inputClass = 'border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+  const inputClassSm = 'border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">설정</h1>
 
       {/* Create Category */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">New Category</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">새 카테고리</h2>
         <form
           onSubmit={e => { e.preventDefault(); if (newName.trim()) createMutation.mutate() }}
           className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         >
-          <input
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            placeholder="Name *"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-          <input
-            value={newDesc}
-            onChange={e => setNewDesc(e.target.value)}
-            placeholder="Description"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <input
-            value={newIcon}
-            onChange={e => setNewIcon(e.target.value)}
-            placeholder="Icon (emoji)"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="이름 *" className={inputClass} required />
+          <input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="설명" className={inputClass} />
+          <input value={newIcon} onChange={e => setNewIcon(e.target.value)} placeholder="아이콘 (이모지)" className={inputClass} />
           <div className="flex gap-2">
-            <input
-              type="number"
-              value={newDecay}
-              onChange={e => setNewDecay(e.target.value)}
-              placeholder="Decay days"
-              min="1"
-              max="365"
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <input type="number" value={newDecay} onChange={e => setNewDecay(e.target.value)} placeholder="감소 기준일" min="1" max="365" className={`flex-1 ${inputClass}`} />
             <button
               type="submit"
               disabled={!newName.trim()}
               className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              <Plus size={16} /> Create
+              <Plus size={16} /> 생성
             </button>
           </div>
         </form>
       </div>
 
       {/* Categories List */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Categories</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">카테고리</h2>
         </div>
         {categories.length === 0 ? (
-          <p className="p-4 text-sm text-gray-400">No categories yet</p>
+          <p className="p-4 text-sm text-gray-400 dark:text-gray-500">카테고리가 없습니다</p>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {categories.map((cat: any) => (
               <div key={cat.id} className="px-4 py-3">
                 {editingId === cat.id ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input
-                      value={editData.name}
-                      onChange={e => setEditData({ ...editData, name: e.target.value })}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm"
-                    />
-                    <input
-                      value={editData.description}
-                      onChange={e => setEditData({ ...editData, description: e.target.value })}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm"
-                      placeholder="Description"
-                    />
-                    <input
-                      value={editData.icon}
-                      onChange={e => setEditData({ ...editData, icon: e.target.value })}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm"
-                      placeholder="Icon"
-                    />
+                    <input value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className={inputClassSm} />
+                    <input value={editData.description} onChange={e => setEditData({ ...editData, description: e.target.value })} className={inputClassSm} placeholder="설명" />
+                    <input value={editData.icon} onChange={e => setEditData({ ...editData, icon: e.target.value })} className={inputClassSm} placeholder="아이콘" />
                     <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={editData.decay_days}
-                        onChange={e => setEditData({ ...editData, decay_days: Number(e.target.value) })}
-                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                        min="1"
-                      />
-                      <button
-                        onClick={() => updateMutation.mutate(cat.id)}
-                        className="p-1 text-green-600 hover:bg-green-50 rounded"
-                      >
+                      <input type="number" value={editData.decay_days} onChange={e => setEditData({ ...editData, decay_days: Number(e.target.value) })} className={`flex-1 ${inputClassSm}`} min="1" />
+                      <button onClick={() => updateMutation.mutate(cat.id)} className="p-1 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded">
                         <Check size={16} />
                       </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="p-1 text-gray-400 hover:bg-gray-100 rounded"
-                      >
+                      <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                         <X size={16} />
                       </button>
                     </div>
@@ -217,22 +169,22 @@ export default function SettingsPage() {
                 ) : (
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-medium text-gray-900">{cat.icon} {cat.name}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{cat.icon} {cat.name}</span>
                       {cat.description && (
-                        <span className="text-sm text-gray-500 ml-2">- {cat.description}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">- {cat.description}</span>
                       )}
-                      <span className="text-xs text-gray-400 ml-2">({cat.decay_days}d decay)</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">({cat.decay_days}일 감소)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => startEdit(cat)}
-                        className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => setDeleteTarget({ id: cat.id, name: cat.name })}
-                        className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
+                        className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -246,20 +198,20 @@ export default function SettingsPage() {
       </div>
 
       {/* Data Export/Import */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Data Management</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">데이터 관리</h2>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
           >
-            <Download size={16} /> Export JSON
+            <Download size={16} /> JSON 내보내기
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700"
           >
-            <Upload size={16} /> Import JSON
+            <Upload size={16} /> JSON 가져오기
           </button>
           <input
             ref={fileInputRef}
@@ -269,16 +221,17 @@ export default function SettingsPage() {
             className="hidden"
           />
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          Import will replace all existing data. Export first to create a backup.
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+          가져오기 시 기존 데이터가 모두 대체됩니다. 먼저 내보내기로 백업하세요.
         </p>
       </div>
 
       {/* Delete Confirm Dialog */}
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete Category"
-          message={`"${deleteTarget.name}" and all its items, skills, and session records will be permanently deleted. This cannot be undone.`}
+          title="카테고리 삭제"
+          message={`"${deleteTarget.name}"과(와) 하위 아이템, 스킬, 연습 기록이 모두 영구 삭제됩니다. 되돌릴 수 없습니다.`}
+          confirmLabel="삭제"
           onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
           onCancel={() => setDeleteTarget(null)}
         />
@@ -287,9 +240,9 @@ export default function SettingsPage() {
       {/* Import Confirm Dialog */}
       {importConfirm && (
         <ConfirmDialog
-          title="Import Data"
-          message={`This will replace ALL existing data with the imported file (${importConfirm.data.categories.length} categories, ${importConfirm.data.skills.length} skills, ${importConfirm.data.sessions.length} sessions). This cannot be undone.`}
-          confirmLabel="Import"
+          title="데이터 가져오기"
+          message={`기존 데이터가 모두 가져온 파일로 대체됩니다 (카테고리 ${importConfirm.data.categories.length}개, 스킬 ${importConfirm.data.skills.length}개, 세션 ${importConfirm.data.sessions.length}개). 되돌릴 수 없습니다.`}
+          confirmLabel="가져오기"
           onConfirm={() => importMutation.mutate(importConfirm)}
           onCancel={() => setImportConfirm(null)}
         />
