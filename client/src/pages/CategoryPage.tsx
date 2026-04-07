@@ -180,7 +180,7 @@ export default function CategoryPage({ onLogSession }: Props) {
             return (
               <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div
-                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750"
+                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   onClick={() => toggleItem(item.id)}
                 >
                   <div className="flex items-center gap-2">

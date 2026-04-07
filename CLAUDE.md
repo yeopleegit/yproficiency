@@ -57,7 +57,7 @@ CASCADE 삭제 적용. 카테고리 삭제 시 하위 데이터 전부 삭제됨
 - `GET/POST /categories/:catId/items`, `GET/PUT/DELETE /items/:id`, `POST /items/:id/copy`
 - `GET/POST /items/:itemId/skills`, `PUT/DELETE /skills/:id`, `POST /skills/:id/copy`
 - `GET/POST /skills/:skillId/sessions`, `PUT/DELETE /sessions/:id`
-- `GET /dashboard/summary` — 전체 decay 상태 포함 대시보드
+- `GET /dashboard/summary?today=YYYY-MM-DD` — 전체 decay 상태 포함 대시보드 (today: 클라이언트 로컬타임 기준 날짜)
 - `GET /dashboard/stats/frequency?skillId=&period=` — 연습 빈도 통계
 - `GET /data/export`, `POST /data/import` — JSON 데이터 백업/복원
 
@@ -85,6 +85,14 @@ DB 파일: `server/data/proficiency.db` (gitignored). 삭제하면 리셋.
 
 - 모든 사용자 대면 텍스트는 한글로 작성
 - 기술 용어(JSON, decay_days 등)는 영문 그대로 사용
+
+## Dashboard
+
+- 대시보드에는 주의(warming)/감소(stale) 상태 스킬만 표시, 양호(fresh)는 숨김
+- 연습한 지 오래된 스킬부터 정렬
+- 주의/감소 스킬이 없는 아이템·카테고리는 자동 숨김
+- 모든 스킬이 양호하면 "모든 스킬이 양호합니다" 안내 표시
+- 날짜 계산은 클라이언트 로컬타임 기준 (today 쿼리 파라미터로 서버 전달)
 
 ## Notes
 

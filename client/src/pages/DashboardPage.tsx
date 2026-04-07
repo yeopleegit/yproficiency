@@ -95,59 +95,88 @@ export default function DashboardPage({ onLogSession }: Props) {
         </div>
       )}
 
-      {/* Categories with Skills */}
-      {categories.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-          <Target size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">카테고리가 없습니다</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            설정에서 카테고리를 만들고, 아이템과 스킬을 추가하세요.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {categories.map((cat: any) => (
-            <div key={cat.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  {cat.icon} {cat.name}
-                </h3>
-              </div>
-              {cat.items.length === 0 ? (
-                <p className="p-4 text-sm text-gray-400 dark:text-gray-500">아이템이 없습니다</p>
-              ) : (
+      {/* Categories with Skills — 주의/감소 상태만, 오래된 순 */}
+      {(() => {
+        // fresh 스킬 제외, 주의(warming)/감소(stale)만 필터링 후 오래된 순 정렬
+        const filtered = categories
+          .map((cat: any) => ({
+            ...cat,
+            items: cat.items
+              .map((item: any) => ({
+                ...item,
+                skills: item.skills
+                  .filter((s: any) => s.status !== 'fresh')
+                  .sort((a: any, b: any) => {
+                    const da = a.daysSinceLastPractice ?? Infinity;
+                    const db = b.daysSinceLastPractice ?? Infinity;
+                    return db - da;
+                  }),
+              }))
+              .filter((item: any) => item.skills.length > 0),
+          }))
+          .filter((cat: any) => cat.items.length > 0);
+
+        if (categories.length === 0) {
+          return (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <Target size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">카테고리가 없습니다</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                설정에서 카테고리를 만들고, 아이템과 스킬을 추가하세요.
+              </p>
+            </div>
+          );
+        }
+
+        if (filtered.length === 0) {
+          return (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <Activity size={48} className="mx-auto text-green-400 dark:text-green-500 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">모든 스킬이 양호합니다</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                주의나 감소 상태인 스킬이 없습니다. 잘하고 있어요!
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            {filtered.map((cat: any) => (
+              <div key={cat.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    {cat.icon} {cat.name}
+                  </h3>
+                </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {cat.items.map((item: any) => (
                     <div key={item.id} className="p-4">
                       <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{item.name}</h4>
-                      {item.skills.length === 0 ? (
-                        <p className="text-xs text-gray-400 dark:text-gray-500">스킬이 없습니다</p>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {item.skills.map((skill: any) => (
-                            <button
-                              key={skill.id}
-                              onClick={() => onLogSession(skill.id)}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm"
-                            >
-                              <span className="text-gray-700 dark:text-gray-300">{skill.name}</span>
-                              <StatusBadge
-                                status={skill.status}
-                                daysSince={skill.daysSinceLastPractice}
-                                decayDays={skill.decayDays}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {item.skills.map((skill: any) => (
+                          <button
+                            key={skill.id}
+                            onClick={() => onLogSession(skill.id)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm"
+                          >
+                            <span className="text-gray-700 dark:text-gray-300">{skill.name}</span>
+                            <StatusBadge
+                              status={skill.status}
+                              daysSince={skill.daysSinceLastPractice}
+                              decayDays={skill.decayDays}
+                            />
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   )
 }

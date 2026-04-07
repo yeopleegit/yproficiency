@@ -43,7 +43,11 @@ export const api = {
   deleteSession: (id: number) => request<void>(`/sessions/${id}`, { method: 'DELETE' }),
 
   // Dashboard
-  getDashboard: () => request<any>('/dashboard/summary'),
+  getDashboard: () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return request<any>(`/dashboard/summary?today=${today}`);
+  },
   getFrequency: (params?: { skillId?: number; period?: number }) => {
     const qs = new URLSearchParams();
     if (params?.skillId) qs.set('skillId', String(params.skillId));

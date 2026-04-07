@@ -12,7 +12,10 @@ function getDecayStatus(daysSince: number | null, decayDays: number): DecayStatu
 }
 
 // GET /api/v1/dashboard/summary
-router.get('/summary', (_req, res) => {
+router.get('/summary', (req, res) => {
+  // 클라이언트 로컬타임 기준 날짜 (없으면 UTC fallback)
+  const today = (req.query.today as string) || new Date().toISOString().slice(0, 10);
+
   const rows = queryAll(`
     SELECT
       c.id as category_id, c.name as category_name, c.icon as category_icon,
@@ -22,14 +25,14 @@ router.get('/summary', (_req, res) => {
       MAX(se.practiced_at) as last_practiced,
       COUNT(se.id) as total_sessions,
       ROUND(AVG(se.rating), 1) as avg_rating,
-      CAST(julianday('now') - julianday(MAX(se.practiced_at)) AS INTEGER) as days_since
+      CAST(julianday(?) - julianday(MAX(se.practiced_at)) AS INTEGER) as days_since
     FROM categories c
     LEFT JOIN items i ON i.category_id = c.id
     LEFT JOIN skills s ON s.item_id = i.id
     LEFT JOIN sessions se ON se.skill_id = s.id
     GROUP BY c.id, i.id, s.id
     ORDER BY c.name, i.name, s.name
-  `);
+  `, [today]);
 
   const categoryMap = new Map<number, DashboardCategory>();
 
@@ -74,21 +77,21 @@ router.get('/summary', (_req, res) => {
       (SELECT COUNT(*) FROM categories) as totalCategories,
       (SELECT COUNT(*) FROM skills) as totalSkills,
       (SELECT COUNT(*) FROM sessions) as totalSessions,
-      (SELECT COUNT(*) FROM sessions WHERE practiced_at >= date('now', '-7 days')) as sessionsThisWeek
-  `);
+      (SELECT COUNT(*) FROM sessions WHERE practiced_at >= date(?, '-7 days')) as sessionsThisWeek
+  `, [today]);
 
   const mostStaleRow = queryOne(`
     SELECT s.name as skillName, i.name as itemName, c.name as categoryName,
-      CAST(julianday('now') - julianday(MAX(se.practiced_at)) AS INTEGER) as daysSince
+      CAST(julianday(?) - julianday(MAX(se.practiced_at)) AS INTEGER) as daysSince
     FROM skills s
     JOIN items i ON i.id = s.item_id
     JOIN categories c ON c.id = i.category_id
     LEFT JOIN sessions se ON se.skill_id = s.id
     GROUP BY s.id
     ORDER BY CASE WHEN MAX(se.practiced_at) IS NULL THEN 999999
-             ELSE julianday('now') - julianday(MAX(se.practiced_at)) END DESC
+             ELSE julianday(?) - julianday(MAX(se.practiced_at)) END DESC
     LIMIT 1
-  `);
+  `, [today, today]);
 
   const stats: DashboardStats = {
     totalCategories: statsRow?.totalCategories ?? 0,
