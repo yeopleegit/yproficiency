@@ -138,4 +138,6 @@ export interface DashboardStats {
 export interface FrequencyData {
   date: string;
   count: number;
+  category_id?: number;
+  category_name?: string;
 }

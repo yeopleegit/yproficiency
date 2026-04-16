@@ -73,7 +73,7 @@ CASCADE 삭제 적용. 카테고리 삭제 시 하위 데이터 전부 삭제됨
 - `GET/POST /items/:itemId/skills`, `PUT/DELETE /skills/:id`, `POST /skills/:id/copy`
 - `GET/POST /skills/:skillId/sessions`, `PUT/DELETE /sessions/:id`
 - `GET /dashboard/summary?today=YYYY-MM-DD` — 전체 decay 상태 포함 대시보드 (today: 클라이언트 로컬타임 기준 날짜)
-- `GET /dashboard/stats/frequency?skillId=&period=` — 연습 빈도 통계
+- `GET /dashboard/stats/frequency?skillId=&period=` — 연습 빈도 통계. `skillId` 미지정 시 `{date, count, category_id, category_name}` 행을 카테고리별로 분리 반환 (대시보드 누적 차트용). `skillId` 지정 시 `category_*` 는 null.
 - `GET /data/export`, `POST /data/import` — JSON 데이터 백업/복원
 
 ## Decay Logic
@@ -130,6 +130,8 @@ DB 파일: `server/data/proficiency.db` (gitignored). 삭제하면 리셋.
 - 날짜 계산은 클라이언트 로컬타임 기준 (today 쿼리 파라미터로 서버 전달)
 - 카테고리 표시 순서는 `categories.sort_order` 기준 — 사이드바 드래그 결과가 그대로 반영됨
 - 카테고리 카드 헤더 오른쪽 끝의 on/off 토글 스위치로 하위 item/skill 영역 접기/펼치기 가능. 숨긴 카테고리 ID는 `localStorage['dashboard_hidden_category_ids']` (숫자 배열) 에 기기별로 저장 (DB 저장 X)
+- 연습 빈도 차트는 카테고리별 누적 막대(`<Bar stackId="a">`) + `<Legend />`. 색은 `CATEGORY_PALETTE` 10색을 카테고리 순서대로 매핑. 데이터는 `{date, count, category_id, category_name}` 행을 클라이언트에서 wide 포맷으로 피벗 (`cat_<id>` 키)
+- 연습 기록 폼(`SessionFormModal`)은 카테고리 → 아이템 → 스킬 3단계 종속 드롭다운. 상위 변경 시 하위 자동 초기화. `skillId` prop 으로 열리면 `useEffect` 로 카테고리/아이템도 자동 매칭
 
 ## Category Reordering
 
@@ -139,6 +141,7 @@ DB 파일: `server/data/proficiency.db` (gitignored). 삭제하면 리셋.
 - `dashboard_summary` RPC (Supabase) 와 로컬 dashboard 라우트 모두 `ORDER BY c.sort_order, c.name` 로 정렬
 - 신규 카테고리는 `max(sort_order) + 1` 로 자동 할당 (목록 맨 아래 추가)
 - 기존 DB 마이그레이션: SQLite 는 `initDb()` 에서 `ALTER TABLE` 자동 실행, Supabase 는 `supabase/migrations/004_categories_sort_order.sql` 적용 필요
+- `session_frequency` RPC 가 카테고리 컬럼을 추가 반환하도록 변경됨 → Supabase 는 `supabase/migrations/005_session_frequency_per_category.sql` 적용 필요 (반환 시그니처 변경이라 DROP 후 재생성)
 
 ## Notes
 

@@ -172,14 +172,16 @@ CREATE OR REPLACE FUNCTION session_frequency(
 )
 RETURNS TABLE (
     date TEXT,
-    count BIGINT
+    count BIGINT,
+    category_id INTEGER,
+    category_name TEXT
 ) AS $$
 DECLARE
     anchor DATE := COALESCE(p_today::DATE, CURRENT_DATE);
 BEGIN
     IF p_skill_id IS NOT NULL THEN
         RETURN QUERY
-        SELECT se.practiced_at::DATE::TEXT, COUNT(*)
+        SELECT se.practiced_at::DATE::TEXT, COUNT(*), NULL::INTEGER, NULL::TEXT
         FROM sessions se
         WHERE se.skill_id = p_skill_id
           AND se.user_id = auth.uid()
@@ -188,12 +190,15 @@ BEGIN
         ORDER BY se.practiced_at::DATE;
     ELSE
         RETURN QUERY
-        SELECT se.practiced_at::DATE::TEXT, COUNT(*)
+        SELECT se.practiced_at::DATE::TEXT, COUNT(*), c.id, c.name
         FROM sessions se
+        JOIN skills s ON s.id = se.skill_id
+        JOIN items i ON i.id = s.item_id
+        JOIN categories c ON c.id = i.category_id
         WHERE se.user_id = auth.uid()
           AND se.practiced_at >= (anchor - (p_days || ' days')::INTERVAL)::TEXT
-        GROUP BY se.practiced_at::DATE
-        ORDER BY se.practiced_at::DATE;
+        GROUP BY se.practiced_at::DATE, c.id, c.name, c.sort_order
+        ORDER BY se.practiced_at::DATE, c.sort_order, c.name;
     END IF;
 END;
 $$ LANGUAGE plpgsql;

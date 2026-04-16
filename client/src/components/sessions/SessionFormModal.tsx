@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Star } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -12,6 +12,8 @@ interface Props {
 
 export default function SessionFormModal({ skillId: initialSkillId, onClose }: Props) {
   const queryClient = useQueryClient()
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('')
+  const [selectedItemId, setSelectedItemId] = useState<number | ''>('')
   const [selectedSkillId, setSelectedSkillId] = useState<number | ''>(initialSkillId ?? '')
   const [practicedAt, setPracticedAt] = useState(() => {
     const now = new Date()
@@ -26,19 +28,36 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
     queryFn: api.getDashboard,
   })
 
-  const skillOptions: { id: number; label: string }[] = []
-  if (dashboard?.categories) {
+  const categories = dashboard?.categories ?? []
+
+  const selectedCategory = useMemo(
+    () => categories.find(c => c.id === selectedCategoryId),
+    [categories, selectedCategoryId]
+  )
+  const items = selectedCategory?.items ?? []
+
+  const selectedItem = useMemo(
+    () => items.find(i => i.id === selectedItemId),
+    [items, selectedItemId]
+  )
+  const skills = selectedItem?.skills ?? []
+
+  // initialSkillId 가 주어지면 카테고리/아이템도 자동 선택
+  useEffect(() => {
+    if (!initialSkillId || !dashboard?.categories) return
     for (const cat of dashboard.categories) {
       for (const item of cat.items) {
         for (const skill of item.skills) {
-          skillOptions.push({
-            id: skill.id,
-            label: `${cat.name} > ${item.name} > ${skill.name}`,
-          })
+          if (skill.id === initialSkillId) {
+            setSelectedCategoryId(cat.id)
+            setSelectedItemId(item.id)
+            setSelectedSkillId(skill.id)
+            return
+          }
         }
       }
     }
-  }
+  }, [initialSkillId, dashboard])
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -67,6 +86,50 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
   return (
     <Modal title="연습 기록" onClose={onClose}>
       <form onSubmit={(e) => { e.preventDefault(); mutation.mutate() }} className="space-y-4">
+        {/* Category selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">카테고리</label>
+          <select
+            value={selectedCategoryId}
+            onChange={e => {
+              const v = e.target.value ? Number(e.target.value) : ''
+              setSelectedCategoryId(v)
+              setSelectedItemId('')
+              setSelectedSkillId('')
+            }}
+            className={inputClass}
+            required
+          >
+            <option value="">카테고리를 선택하세요...</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Item selector */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">아이템</label>
+          <select
+            value={selectedItemId}
+            onChange={e => {
+              const v = e.target.value ? Number(e.target.value) : ''
+              setSelectedItemId(v)
+              setSelectedSkillId('')
+            }}
+            className={inputClass}
+            required
+            disabled={!selectedCategoryId}
+          >
+            <option value="">
+              {selectedCategoryId ? '아이템을 선택하세요...' : '카테고리를 먼저 선택하세요'}
+            </option>
+            {items.map(i => (
+              <option key={i.id} value={i.id}>{i.name}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Skill selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">스킬</label>
@@ -75,10 +138,13 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
             onChange={e => setSelectedSkillId(e.target.value ? Number(e.target.value) : '')}
             className={inputClass}
             required
+            disabled={!selectedItemId}
           >
-            <option value="">스킬을 선택하세요...</option>
-            {skillOptions.map(s => (
-              <option key={s.id} value={s.id}>{s.label}</option>
+            <option value="">
+              {selectedItemId ? '스킬을 선택하세요...' : '아이템을 먼저 선택하세요'}
+            </option>
+            {skills.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </div>

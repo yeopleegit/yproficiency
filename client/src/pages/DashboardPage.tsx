@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Activity, Target, Calendar, AlertTriangle, Plus } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { api } from '../api/client'
 import StatusBadge from '../components/shared/StatusBadge'
 
@@ -10,6 +10,11 @@ interface Props {
 }
 
 const HIDDEN_CATEGORIES_KEY = 'dashboard_hidden_category_ids'
+
+const CATEGORY_PALETTE = [
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#06b6d4',
+]
 
 function loadHiddenIds(): Set<number> {
   try {
@@ -48,6 +53,39 @@ export default function DashboardPage({ onLogSession }: Props) {
     queryFn: () => api.getFrequency({ period: 30 }),
   })
 
+  const stats = data?.stats
+  const categories = data?.categories ?? []
+
+  // 빈도 데이터를 카테고리별로 누적 막대 차트에 맞게 피벗
+  // (Hooks 규칙: 조건부 early return 이전에 호출되어야 함)
+  const { chartData: frequencyChartData, chartCategories: frequencyChartCategories } = useMemo(() => {
+    const dateMap = new Map<string, Record<string, any>>()
+    const catMap = new Map<number, string>()
+    for (const row of frequency as any[]) {
+      if (row.category_id == null) continue
+      if (!catMap.has(row.category_id)) catMap.set(row.category_id, row.category_name)
+      let bucket = dateMap.get(row.date)
+      if (!bucket) {
+        bucket = { date: row.date }
+        dateMap.set(row.date, bucket)
+      }
+      bucket[`cat_${row.category_id}`] = (bucket[`cat_${row.category_id}`] ?? 0) + Number(row.count)
+    }
+    const sortedDates = Array.from(dateMap.values()).sort((a, b) =>
+      String(a.date).localeCompare(String(b.date))
+    )
+    // 카테고리 순서: 사이드바 sort_order 기준 (있는 것만)
+    const orderedCats: { id: number; name: string }[] = []
+    for (const cat of categories) {
+      if (catMap.has(cat.id)) orderedCats.push({ id: cat.id, name: cat.name })
+    }
+    // categories에 없는 (삭제 등) 케이스도 끝에 추가
+    for (const [id, name] of catMap.entries()) {
+      if (!orderedCats.find((c) => c.id === id)) orderedCats.push({ id, name })
+    }
+    return { chartData: sortedDates, chartCategories: orderedCats }
+  }, [frequency, categories])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -56,14 +94,11 @@ export default function DashboardPage({ onLogSession }: Props) {
     )
   }
 
-  const stats = data?.stats
-  const categories = data?.categories ?? []
-
   const statCards = [
     { label: '카테고리', value: stats?.totalCategories ?? 0, icon: Target, color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30' },
     { label: '스킬', value: stats?.totalSkills ?? 0, icon: Activity, color: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30' },
     { label: '총 연습 횟수', value: stats?.totalSessions ?? 0, icon: Calendar, color: 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/30' },
-    { label: '이번 주', value: stats?.sessionsThisWeek ?? 0, icon: Calendar, color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/30' },
+    { label: '이번 주 연습', value: stats?.sessionsThisWeek ?? 0, icon: Calendar, color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/30' },
   ]
 
   return (
@@ -109,16 +144,25 @@ export default function DashboardPage({ onLogSession }: Props) {
       )}
 
       {/* Frequency Chart */}
-      {frequency.length > 0 && (
+      {frequencyChartData.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">연습 빈도 (최근 30일)</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={frequency}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={frequencyChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-700" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(d: string) => d.slice(5)} stroke="currentColor" className="text-gray-500 dark:text-gray-400" />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="currentColor" className="text-gray-500 dark:text-gray-400" />
               <Tooltip contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--tooltip-border)', borderRadius: '8px', color: 'var(--tooltip-text)' }} />
-              <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+              {frequencyChartCategories.map((cat, idx) => (
+                <Bar
+                  key={cat.id}
+                  dataKey={`cat_${cat.id}`}
+                  name={cat.name}
+                  stackId="a"
+                  fill={CATEGORY_PALETTE[idx % CATEGORY_PALETTE.length]}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>

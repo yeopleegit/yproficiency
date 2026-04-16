@@ -127,10 +127,17 @@ router.get('/stats/frequency', (req, res) => {
     );
   } else {
     data = queryAll(
-      `SELECT date(practiced_at) as date, COUNT(*) as count
-       FROM sessions
-       WHERE practiced_at >= date(?, '-' || ? || ' days')
-       GROUP BY date(practiced_at) ORDER BY date`,
+      `SELECT date(se.practiced_at) as date,
+              c.id as category_id,
+              c.name as category_name,
+              COUNT(*) as count
+       FROM sessions se
+       JOIN skills s ON s.id = se.skill_id
+       JOIN items i ON i.id = s.item_id
+       JOIN categories c ON c.id = i.category_id
+       WHERE se.practiced_at >= date(?, '-' || ? || ' days')
+       GROUP BY date(se.practiced_at), c.id, c.name
+       ORDER BY date, c.sort_order, c.name`,
       [today, days]
     );
   }
