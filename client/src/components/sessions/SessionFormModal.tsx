@@ -31,13 +31,13 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
   const categories = dashboard?.categories ?? []
 
   const selectedCategory = useMemo(
-    () => categories.find(c => c.id === selectedCategoryId),
+    () => categories.find((c: any) => c.id === selectedCategoryId),
     [categories, selectedCategoryId]
   )
   const items = selectedCategory?.items ?? []
 
   const selectedItem = useMemo(
-    () => items.find(i => i.id === selectedItemId),
+    () => items.find((i: any) => i.id === selectedItemId),
     [items, selectedItemId]
   )
   const skills = selectedItem?.skills ?? []
@@ -101,7 +101,7 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
             required
           >
             <option value="">카테고리를 선택하세요...</option>
-            {categories.map(c => (
+            {categories.map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
@@ -124,7 +124,7 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
             <option value="">
               {selectedCategoryId ? '아이템을 선택하세요...' : '카테고리를 먼저 선택하세요'}
             </option>
-            {items.map(i => (
+            {items.map((i: any) => (
               <option key={i.id} value={i.id}>{i.name}</option>
             ))}
           </select>
@@ -143,7 +143,7 @@ export default function SessionFormModal({ skillId: initialSkillId, onClose }: P
             <option value="">
               {selectedItemId ? '스킬을 선택하세요...' : '아이템을 먼저 선택하세요'}
             </option>
-            {skills.map(s => (
+            {skills.map((s: any) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
