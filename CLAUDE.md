@@ -110,6 +110,13 @@ DB 파일: `server/data/proficiency.db` (gitignored). 삭제하면 리셋.
 - 모든 테이블에 `user_id` 컬럼 → RLS로 자동 필터링
 - 로컬 개발 서버는 인증 없이 `user_id = 'local-dev-user'` 사용
 
+## Design System
+
+- Tesla 스타일 미니멀 톤 (자세한 토큰/원칙은 `DESIGN.md`)
+- Primary 액션 버튼: `bg-carbon text-canvas dark:bg-canvas dark:text-carbon hover:bg-graphite dark:hover:bg-pale` (라이트=검정, 다크=흰색 invert). "연습 기록", 폼 저장/추가, 확인 다이얼로그 등 모든 메인 액션이 같은 패턴
+- `bg-electric` (Tesla blue `#3E6AE1`) 은 **액센트 전용**: 사이드바 드래그 인디케이터, 대시보드 카테고리 토글 ON, 차트 첫 번째 카테고리, chart cursor hover. 일반 버튼에 사용 금지
+- 차트 카테고리 색은 `DashboardPage.tsx` 의 `CATEGORY_PALETTE` (채도 낮춘 jewel tones 10색: 블루/에메랄드/앰버/레드/바이올렛/시안/핑크/라임/인디고/오렌지). 라이트/다크 모드 모두 배경과 충분한 대비 확보
+
 ## Dark Mode
 
 - Tailwind v4 class 기반 다크모드 (`@custom-variant dark`)
