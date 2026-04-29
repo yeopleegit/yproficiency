@@ -11,9 +11,9 @@ export default function SettingsPage() {
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newIcon, setNewIcon] = useState('')
-  const [newDecay, setNewDecay] = useState('14')
+  const [newDecay, setNewDecay] = useState('21')
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [editData, setEditData] = useState({ name: '', description: '', icon: '', decay_days: 14 })
+  const [editData, setEditData] = useState({ name: '', description: '', icon: '', decay_days: 21 })
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
   const [importConfirm, setImportConfirm] = useState<any>(null)
 
@@ -27,12 +27,12 @@ export default function SettingsPage() {
       name: newName,
       description: newDesc || undefined,
       icon: newIcon || undefined,
-      decay_days: Number(newDecay) || 14,
+      decay_days: Number(newDecay) || 21,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      setNewName(''); setNewDesc(''); setNewIcon(''); setNewDecay('14')
+      setNewName(''); setNewDesc(''); setNewIcon(''); setNewDecay('21')
       toast.success('카테고리를 생성했습니다')
     },
   })

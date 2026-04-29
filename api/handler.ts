@@ -79,7 +79,7 @@ addRoute('POST', 'categories', async (req, res, _params, supabase, userId) => {
   const nextOrder = (maxRow?.sort_order ?? -1) + 1;
   const { data, error } = await supabase
     .from('categories')
-    .insert({ name, description: description ?? null, icon: icon ?? null, decay_days: decay_days ?? 14, sort_order: nextOrder, user_id: userId })
+    .insert({ name, description: description ?? null, icon: icon ?? null, decay_days: decay_days ?? 21, sort_order: nextOrder, user_id: userId })
     .select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);

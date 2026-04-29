@@ -75,7 +75,7 @@ router.post('/', (req, res) => {
   const nextOrder = maxRow?.next ?? 0;
   const id = insert(
     'INSERT INTO categories (name, description, icon, decay_days, sort_order, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, description ?? null, icon ?? null, decay_days ?? 14, nextOrder, 'local-dev-user']
+    [name, description ?? null, icon ?? null, decay_days ?? 21, nextOrder, 'local-dev-user']
   );
   const category = queryOne('SELECT * FROM categories WHERE id = ?', [id]);
   res.status(201).json(category);

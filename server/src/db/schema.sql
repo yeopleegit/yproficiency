@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS categories (
     name        TEXT NOT NULL,
     description TEXT,
     icon        TEXT,
-    decay_days  INTEGER NOT NULL DEFAULT 14,
+    decay_days  INTEGER NOT NULL DEFAULT 21,
     sort_order  INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
